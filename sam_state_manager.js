@@ -249,27 +249,14 @@ async function applyCommandsToState(commands, state) {
         const newStateBlock = `${STATE_BLOCK_START_MARKER}\n${JSON.stringify(state, null, 2)}\n${STATE_BLOCK_END_MARKER}`;
         const finalContent = `${cleanNarrative}\n\n${newStateBlock}`;
         //console.log(`[SAM] debug final content = ${finalContent} `);
-        `
-        lastAIMessage is a ChatMessageToSet interface.
-        ChatMessageToSet()
-        
-        `
 
         // setting current chat message.
         index = lastAIMessage.message_id;
         await setChatMessage({message: finalContent}, index);
 
-
-        //console.log(`[${SCRIPT_NAME}] State processed and saved for message at index: ${index}`);
-
     }
 
     async function loadStateFromMessage(index) {
-        if (index === undefined || index < 0) {
-            console.log(`[${SCRIPT_NAME}] No valid message index. Loading initial state.`);
-            await replaceVariables(goodCopy(INITIAL_STATE));
-            return;
-        }
 
         var message = ""
         try {
@@ -278,7 +265,6 @@ async function applyCommandsToState(commands, state) {
             console.log(`[SAM] Load state from message: Failed to get at index= ${index}, likely the index does not exist. SAM will keep old state. Error message: ${e}`);
             return;
         }
-
 
         //console.log(`[${SCRIPT_NAME}] Re-loading state from message at index: ${index}`);
         const messageContent = message.message;
@@ -317,7 +303,7 @@ async function applyCommandsToState(commands, state) {
     // --- EVENT LISTENER REGISTRATION ---
 $(async () => {
     try {
-        console.log(`[${SCRIPT_NAME}] GLHF, player.`);
+        console.log(`[${SCRIPT_NAME}] State management loading. GLHF, player.`);
 
         /**
          * Re-initializes the state based on the current chat's history.
@@ -363,7 +349,9 @@ $(async () => {
                 try {
                     const index = SillyTavern.chat.length - 1;
                     if (index !== -1) {
-                        await loadStateFromMessage(index);
+                        console.log("[SAM] on swipe, load previous state or keep previous state");
+                        const lastAIMessageIndex = await findLastAiMessageAndIndex(-1);
+                        await loadStateFromMessage(lastAIMessageIndex);
                     }
                 } catch (error) {
                     console.error(`[${SCRIPT_NAME}] Error in deferred MESSAGE_SWIPED handler:`, error);
@@ -390,9 +378,8 @@ $(async () => {
             try {
                 if (message.role === "user") {
 
-                    console.log("[SAM] DEBUG: detected message edit, reload last state");
-                    const lastAiIndex = await findLastAiMessageAndIndex(-1);
-                    await loadStateFromMessage(lastAiIndex);
+                    // do NOTHING.
+
                 } else {
                     // if it is an AI message, we do not do anything but we reload state. This allows user manipulation of things.
                     console.log("[SAM] DEBUG: detected message edit, reload last AI message state");
